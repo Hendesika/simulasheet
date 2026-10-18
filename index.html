@@ -2,91 +2,341 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow">
-<title>SimulaSheet</title>
-<!--
-  The site's front door before launch.
-
-  `privacy.html` has to be reachable from the day the first tester
-  installs the app: the built AAB prints its address in the settings
-  screen, and Play will not take a listing whose policy URL does not
-  open. `index.html` does not — it is the marketing page, and it is the
-  one thing on this domain worth copying (user decision, 2026-09-06).
-
-  So `publish_site.sh --prelaunch` publishes the real policy and stands
-  this in the front door instead: the name, the publisher, and the way
-  through to the policy. Nothing about what the app does, no screens, no
-  film, no feature list.
-
-  On launch day, `publish_site.sh --stage-only` builds the full site and
-  the real index.html takes this page's place. Nothing else moves — same
-  repository, same branch, same two addresses.
--->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SimulaSheet — Engineering Calculator</title>
+<meta name="description" content="230+ cited engineering calculations with live parametric technical drawings. Fully offline, ad-free.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap">
 <style>
-  :root {
-    --ink: #0c1420;
-    --paper: #e6eff7;
-    --muted: #7a93a8;
-    --accent: #4fc3f7;
+  :root{
+    --bg:#F6F3EC; --surface:#FFFFFF; --surface2:#FBF9F4;
+    --grid:rgba(30,111,168,.10); --line:rgba(30,111,168,.25);
+    --ink:#16232F; --ink-dim:#5B6B7A;
+    --accent:#1E6FA8; --accent-soft:rgba(30,111,168,.16); --accent2:#E8862E;
+    --ok:#1F9D6B;
   }
-  html { color-scheme: dark; }
-  body {
-    margin: 0;
-    min-height: 100vh;
-    display: grid;
-    place-items: center;
-    padding: 32px;
-    background: var(--ink);
-    color: var(--paper);
-    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
-    /* The drawing grid the icon, the banner and the store tiles all use. */
-    background-image:
-      linear-gradient(to right, rgba(79,195,247,.08) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(79,195,247,.08) 1px, transparent 1px);
-    background-size: 64px 64px;
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0C1420; --surface:#111D2E; --surface2:#16263B;
+      --grid:rgba(79,195,247,.10); --line:rgba(79,195,247,.22);
+      --ink:#E6EFF7; --ink-dim:#9DB2C7;
+      --accent:#4FC3F7; --accent-soft:rgba(79,195,247,.16); --accent2:#FFB454;
+      --ok:#3DDC97;
+    }
   }
-  main { max-width: 34rem; text-align: center; }
-  h1 {
-    margin: 0;
-    font-size: clamp(2.2rem, 9vw, 3.4rem);
-    font-weight: 700;
-    letter-spacing: -0.02em;
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; color:var(--ink); background:
+      repeating-linear-gradient(0deg,var(--grid) 0 1px,transparent 1px 24px),
+      repeating-linear-gradient(90deg,var(--grid) 0 1px,transparent 1px 24px),
+      var(--bg);
+    font:400 16px/1.6 system-ui,"Segoe UI",Roboto,sans-serif;
   }
-  .rule {
-    width: 96px;
-    height: 2px;
-    margin: 20px auto;
-    background: var(--accent);
-    opacity: .85;
+  .mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 20px}
+  a{color:var(--accent)}
+  /* header */
+  header{border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(6px);position:sticky;top:0;z-index:9}
+  .bar{display:flex;align-items:center;gap:18px;padding:14px 0}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-.2px;font-size:19px;color:var(--ink);text-decoration:none}
+  .logo svg{display:block}
+  nav{margin-left:auto;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+  nav a{color:var(--ink-dim);text-decoration:none;font-size:14.5px}
+  nav a:hover{color:var(--accent)}
+  select{
+    background:var(--surface2);color:var(--ink);border:1px solid var(--line);
+    padding:6px 8px;border-radius:8px;font:inherit;font-size:13.5px
   }
-  p { margin: 0 0 8px; color: var(--muted); }
-  .publisher {
-    margin-top: 28px;
-    font-size: 13px;
-    letter-spacing: .32em;
-    text-transform: uppercase;
-    color: var(--muted);
+  /* hero */
+  .hero{display:grid;grid-template-columns:1.05fr 1fr;gap:36px;align-items:center;padding:64px 0 56px}
+  .badge{
+    display:inline-block;border:1px solid var(--line);background:var(--surface2);
+    color:var(--ink-dim);font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+    padding:6px 12px;border-radius:999px;margin-bottom:18px
   }
-  a {
-    display: inline-block;
-    margin-top: 24px;
-    color: var(--accent);
-    text-decoration: none;
-    border-bottom: 1px solid rgba(79,195,247,.4);
-    padding-bottom: 2px;
+  h1{font-size:clamp(30px,4.6vw,46px);line-height:1.12;letter-spacing:-.02em;margin:0 0 16px;font-weight:600;text-wrap:balance}
+  .sub{color:var(--ink-dim);font-size:17.5px;max-width:34em;margin:0}
+  /* sheet card (pafta) */
+  .sheet{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .sheet .head{
+    display:flex;justify-content:space-between;gap:10px;align-items:center;
+    border-bottom:1px solid var(--line);padding:9px 14px;background:var(--surface2);
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim)
   }
-  a:hover { border-bottom-color: var(--accent); }
+  .sheet .head .code{color:var(--accent);font-weight:600}
+  .demo-body{padding:16px 16px 18px}
+  .demo-svg{width:100%;height:auto;display:block}
+  .readout{display:flex;align-items:baseline;gap:10px;margin:6px 0 2px;flex-wrap:wrap}
+  .readout .val{font-size:26px;font-weight:600;color:var(--accent2)}
+  .readout .lbl{color:var(--ink-dim);font-size:13px}
+  .slider-row{display:flex;align-items:center;gap:12px;margin-top:10px}
+  .slider-row .tag{font-size:12.5px;color:var(--ink-dim);white-space:nowrap}
+  input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+  .caption{color:var(--ink-dim);font-size:12.5px;margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+  /* features */
+  section{padding:34px 0}
+  h2{font-size:26px;letter-spacing:-.015em;margin:0 0 22px;font-weight:600;text-wrap:balance}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .feat{padding:18px 18px 20px}
+  .feat svg{color:var(--accent);margin-bottom:10px}
+  .feat h3{margin:0 0 6px;font-size:16.5px;font-weight:600}
+  .feat p{margin:0;color:var(--ink-dim);font-size:14.5px}
+  /* pro */
+  .pro-card{display:grid;grid-template-columns:1.1fr 1fr;gap:0}
+  .pro-l{padding:26px 28px}
+  .pro-l p{color:var(--ink-dim);margin:8px 0 0;max-width:30em}
+  .pro-r{border-inline-start:1px solid var(--line);padding:20px 28px;background:var(--surface2)}
+  .pro-r ul{list-style:none;margin:0;padding:0}
+  .pro-r li{padding:9px 0;border-bottom:1px dashed var(--line);font-size:15px;display:flex;gap:10px}
+  .pro-r li:last-child{border-bottom:none}
+  .tick{color:var(--ok);font-weight:600}
+  .one-time{color:var(--accent2);font-weight:600}
+  /* langs + footer */
+  /* Gallery: the frames are 1080x1920, shown at half that and wrapped so a
+     phone shows one and a desktop shows three. */
+  .shots{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+  .shots img,.promo{
+    width:min(270px,44vw);height:auto;border-radius:12px;
+    border:1px solid var(--line);background:var(--surface)
+  }
+  .promo{display:block;margin:14px auto 0;width:min(300px,60vw)}
+  .langs{color:var(--ink-dim);font-size:15px;line-height:2}
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:26px 0 44px;color:var(--ink-dim);font-size:14px;display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
+  @media (max-width:840px){
+    .hero{grid-template-columns:1fr;padding-top:40px}
+    .grid3{grid-template-columns:1fr 1fr}
+    .pro-card{grid-template-columns:1fr}
+    .pro-r{border-inline-start:none;border-top:1px solid var(--line)}
+  }
+  /* Dar telefonda bağlantılar gizlenmiyor, sarıyor (P9 I5). Eskiden
+     Özellikler / Ekranlar / Pro `display:none` idi ve tek kalan bağlantı
+     Gizlilik oluyordu — yani okurun en az işine yarayanı. Nav zaten
+     flex-wrap; tek gereken sayfanın soluna hizalanması ve aralığın
+     daralması. */
+  @media (max-width:560px){
+    .grid3{grid-template-columns:1fr}
+    nav{margin-left:0;gap:12px;row-gap:6px}
+    nav a{font-size:14px}
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .demo-curve{transition:d .18s ease-out}
+  }
 </style>
 </head>
 <body>
-<main>
-  <h1>SimulaSheet</h1>
-  <div class="rule"></div>
-  <p>An Android app, in testing.</p>
-  <p>This site opens when the app does.</p>
-  <a href="privacy.html">Privacy policy</a>
-  <div class="publisher">Hendesika</div>
+<header>
+  <div class="wrap bar">
+    <a class="logo" href="#">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="var(--accent)" stroke-width="1.6" aria-hidden="true">
+        <rect x="1.5" y="1.5" width="23" height="23" rx="4"/>
+        <path d="M5 18 L21 18" stroke="var(--accent2)"/>
+        <path d="M5 18 Q13 10.5 21 18" />
+        <path d="M13 14.2 L13 7.4 M11.3 9.2 L13 7.2 L14.7 9.2" stroke="var(--accent2)"/>
+      </svg>
+      <span>SimulaSheet</span>
+    </a>
+    <nav>
+      <a href="#features" data-i18n="nav.features">Features</a>
+      <a href="#gallery" data-i18n="nav.gallery">Screens</a>
+      <a href="#pro" data-i18n="nav.pro">Pro</a>
+      <a href="privacy.html" data-i18n="nav.privacy">Privacy</a>
+      <select id="lang" aria-label="Language"></select>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <div>
+      <span class="badge" data-i18n="hero.badge">Coming soon on Google Play</span>
+      <h1 data-i18n="hero.title">Engineering calculations you can cite.</h1>
+      <p class="sub" data-i18n="hero.sub">230+ solved cases across 23 categories — every formula sourced, every result drawn live as a technical drawing. Fully offline, ad-free.</p>
+    </div>
+
+    <div class="sheet" id="demo">
+      <div class="head"><span class="code mono">STR-05</span><span data-i18n="demo.title">Simply supported beam — live</span></div>
+      <div class="demo-body">
+        <svg class="demo-svg" viewBox="0 0 360 190" aria-hidden="true">
+          <!-- supports -->
+          <g stroke="var(--ink-dim)" stroke-width="1.4" fill="none">
+            <path d="M48 96 L40 112 L56 112 Z M300 96 L292 112 L308 112 Z"/>
+            <path d="M36 116 l6 -6 M44 116 l6 -6 M52 116 l6 -6 M288 116 l6 -6 M296 116 l6 -6 M304 116 l6 -6"/>
+          </g>
+          <!-- undeformed axis -->
+          <line x1="48" y1="92" x2="300" y2="92" stroke="var(--ink-dim)" stroke-width="1" stroke-dasharray="5 5" opacity=".55"/>
+          <!-- deformed band + curve -->
+          <path id="band" class="demo-curve" d="M48 92 Q174 140 300 92" stroke="var(--accent-soft)" stroke-width="14" fill="none" stroke-linecap="round"/>
+          <path id="curve" class="demo-curve" d="M48 92 Q174 140 300 92" stroke="var(--accent)" stroke-width="2.4" fill="none"/>
+          <!-- load arrow -->
+          <g stroke="var(--accent2)" stroke-width="2.2" fill="none">
+            <path d="M174 30 L174 74"/><path d="M167 65 L174 76 L181 65"/>
+          </g>
+          <text x="182" y="42" fill="var(--accent2)" class="mono" font-size="14" id="ptext">P = 20 kN</text>
+          <!-- delta dimension -->
+          <g stroke="var(--accent2)" stroke-width="1.3" fill="none" opacity=".9">
+            <path id="dline" d="M174 92 L174 116"/>
+          </g>
+          <text x="182" y="132" fill="var(--ink)" class="mono" font-size="13" id="dtext">δ = 1.83 mm</text>
+          <!-- span dimension -->
+          <g stroke="var(--ink-dim)" stroke-width="1.1" fill="none" opacity=".8">
+            <path d="M48 158 L300 158 M48 152 L48 164 M300 152 L300 164"/>
+            <path d="M54 155 L48 158 L54 161 M294 155 L300 158 L294 161"/>
+          </g>
+          <text x="164" y="176" fill="var(--ink-dim)" class="mono" font-size="12">L = 2 m · IPE 160</text>
+        </svg>
+        <div class="readout mono"><span class="val" id="dval">1.83 mm</span><span class="lbl">δ = P·L³ / 48·E·I</span></div>
+        <div class="slider-row">
+          <span class="tag mono" data-i18n="demo.load">Load P</span>
+          <input type="range" id="load" min="1" max="50" value="20" step="1" aria-label="Load P (kN)">
+          <span class="tag mono" id="lval">20 kN</span>
+        </div>
+        <div class="caption" data-i18n="demo.caption">The deflection is drawn ×75 exaggerated; δ is the true value. In the app, every calculation is drawn like this — live.</div>
+      </div>
+    </div>
+  </div>
+
+  <section id="features">
+    <h2 data-i18n="feat.title">Built the way engineers work</h2>
+    <div class="grid3">
+      <div class="sheet feat">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h11a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3V4Z"/><path d="M8 8h6M8 12h6"/></svg>
+        <h3 data-i18n="feat.cited.t">Sources, not folklore</h3><p data-i18n="feat.cited.b">Every formula names its book or standard, down to the chapter or equation, and is tested against solved examples from the literature.</p>
+      </div>
+      <div class="sheet feat">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3 4 21M12 3l8 18M7.5 13h9"/></svg>
+        <h3 data-i18n="feat.drawn.t">Live technical drawings</h3><p data-i18n="feat.drawn.b">Supports, load arrows, dimension lines and section views — redrawn instantly as you change the inputs. No stock images.</p>
+      </div>
+      <div class="sheet feat">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="2.5" width="14" height="19" rx="2.5"/><path d="M9 18.5h6M8.2 8.6l7.6 6.8M15.8 8.6l-7.6 6.8"/></svg>
+        <h3 data-i18n="feat.offline.t">Fully offline</h3><p data-i18n="feat.offline.b">No network connection of its own, no account, no ads, no tracking. Your calculations stay on your device.</p>
+      </div>
+      <div class="sheet feat">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></svg>
+        <h3 data-i18n="feat.fits.t">ISO 286 fits, computed</h3><p data-i18n="feat.fits.b">Tolerance limits are calculated from the standard's own formulas instead of copied tables.</p>
+      </div>
+      <div class="sheet feat">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7.5 12 3l9 4.5-9 4.5L3 7.5ZM3 12l9 4.5L21 12M3 16.5 12 21l9-4.5"/></svg>
+        <h3 data-i18n="feat.materials.t">55-material library</h3><p data-i18n="feat.materials.b">Composition, mechanical properties, standard equivalents, heat-treatment states and machinability.</p>
+      </div>
+      <div class="sheet feat">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 14.5 9.5 9l3.5 3.5L18.5 7M18.5 7H14m4.5 0v4.5"/><path d="M3 20h18"/></svg>
+        <h3 data-i18n="feat.units.t">Units everywhere</h3><p data-i18n="feat.units.b">A full unit converter one tap away on every screen; metric and US customary systems.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="gallery">
+    <h2 data-i18n="gallery.title">What it looks like</h2>
+    <p class="dim" data-i18n="gallery.b">Screens from the app itself, with the drawing each one produces beside it.</p>
+    <div class="shots">
+      <img src="img/shot-02-beam.png" width="540" height="960" loading="lazy" alt="">
+      <img src="img/shot-05-tolerances.png" width="540" height="960" loading="lazy" alt="">
+      <img src="img/shot-06-materials.png" width="540" height="960" loading="lazy" alt="">
+    </div>
+    <h2 style="margin-top:34px" data-i18n="video.title">Thirty seconds of it working</h2>
+    <p class="dim" data-i18n="video.b">The load slider moved, and the curve, the diagrams and every number following it.</p>
+    <video class="promo" controls playsinline preload="none"
+           poster="img/shot-02-beam.png" width="540" height="960">
+      <source src="img/simulasheet-en.mp4" type="video/mp4">
+    </video>
+  </section>
+
+  <section id="pro">
+    <div class="sheet pro-card">
+      <div class="pro-l">
+        <div class="head" style="border:none;background:none;padding:0 0 8px"><span class="code mono">PRO</span></div>
+        <h2 style="margin-bottom:4px"><span class="one-time" data-i18n="pro.title">One purchase. Everything.</span></h2>
+        <p data-i18n="pro.b">More than half of the app is free, forever. Pro is a single one-time purchase — no subscription — that unlocks:</p>
+      </div>
+      <div class="pro-r">
+        <ul>
+          <li><span class="tick">✓</span><span data-i18n="pro.i1">Every calculation case, today's and future ones</span></li>
+          <li><span class="tick">✓</span><span data-i18n="pro.i2">PDF calculation reports</span></li>
+          <li><span class="tick">✓</span><span data-i18n="pro.i3">Saved projects, unlimited favorites and history</span></li>
+          <li><span class="tick">✓</span><span data-i18n="pro.i4">Professional sections of material cards</span></li>
+          <li><span class="tick">✓</span><span data-i18n="pro.i5">Comparison tools and custom materials</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="languages">
+    <h2 data-i18n="langs.title">16 languages</h2>
+    <p class="langs" data-i18n="langs.b">English · Türkçe · Deutsch · Français · Italiano · Español · Português · Русский · 日本語 · 한국어 · 简体中文 · 繁體中文 · العربية · हिन्दी · Bahasa Indonesia · ไทย</p>
+  </section>
 </main>
+
+<footer>
+  <div class="wrap" style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <span>© 2026 Hendesika. <span data-i18n="footer.rights">All rights reserved.</span></span>
+    <span><a href="mailto:hendesika@gmail.com">hendesika@gmail.com</a> ·
+    <a href="privacy.html" data-i18n="footer.privacy">Privacy Policy</a></span>
+  </div>
+</footer>
+
+<!-- I18N:BEGIN (generated by tools/marketing/build_site.py — do not edit by hand) -->
+<script type="application/json" id="i18n-data">{"en":{"lang.name":"English","nav.features":"Features","nav.pro":"Pro","nav.privacy":"Privacy","hero.badge":"Coming soon on Google Play","hero.title":"Engineering calculations you can cite.","hero.sub":"230+ solved cases across 23 categories — every formula sourced, every result drawn live as a technical drawing. Fully offline, ad-free.","demo.title":"Simply supported beam — live","demo.load":"Load P","demo.caption":"The deflection is drawn ×75 exaggerated; δ is the true value. In the app, every calculation is drawn like this — live.","feat.title":"Built the way engineers work","feat.cited.t":"Sources, not folklore","feat.cited.b":"Every formula names its book or standard, down to the chapter or equation, and is tested against solved examples from the literature.","feat.drawn.t":"Live technical drawings","feat.drawn.b":"Supports, load arrows, dimension lines and section views — redrawn instantly as you change the inputs. No stock images.","feat.offline.t":"Fully offline","feat.offline.b":"No network connection of its own, no account, no ads, no tracking. Your calculations stay on your device.","feat.fits.t":"ISO 286 fits, computed","feat.fits.b":"Tolerance limits are calculated from the standard's own formulas instead of copied tables.","feat.materials.t":"55-material library","feat.materials.b":"Composition, mechanical properties, standard equivalents, heat-treatment states and machinability.","feat.units.t":"Units everywhere","feat.units.b":"A full unit converter one tap away on every screen; metric and US customary systems.","pro.title":"One purchase. Everything.","pro.b":"More than half of the app is free, forever. Pro is a single one-time purchase — no subscription — that unlocks:","pro.i1":"Every calculation case, today's and future ones","pro.i2":"PDF calculation reports","pro.i3":"Saved projects, unlimited favorites and history","pro.i4":"Professional sections of material cards","pro.i5":"Comparison tools and custom materials","langs.title":"16 languages","langs.b":"English · Türkçe · Deutsch · Français · Italiano · Español · Português · Русский · 日本語 · 한국어 · 简体中文 · 繁體中文 · العربية · हिन्दी · Bahasa Indonesia · ไทย","footer.privacy":"Privacy Policy","footer.rights":"All rights reserved.","gallery.title":"What it looks like","gallery.b":"Screens from the app itself, with the drawing each one produces beside it.","video.title":"Thirty seconds of it working","video.b":"The load slider moved, and the curve, the diagrams and every number following it.","nav.gallery":"Screens"},"tr":{"lang.name":"Türkçe","nav.features":"Özellikler","nav.pro":"Pro","nav.privacy":"Gizlilik","hero.badge":"Yakında Google Play'de","hero.title":"Kaynağını gösterebildiğiniz mühendislik hesapları.","hero.sub":"23 kategoride 230+ çözümlü durum — her formül kaynaklı, her sonuç canlı bir teknik çizimle. Tamamen çevrimdışı, reklamsız.","demo.title":"Basit mesnetli kiriş — canlı","demo.load":"Yük P","demo.caption":"Sehim ×75 abartılı çizilmiştir; δ gerçek değerdir. Uygulamada her hesap böyle, canlı çizilir.","feat.title":"Mühendisin çalıştığı gibi kurulmuş","feat.cited.t":"Kulaktan dolma değil, kaynak","feat.cited.b":"Her formül kitabını ya da standardını bölüm/denklem numarasına kadar söyler ve literatürdeki çözülmüş örneklerle test edilmiştir.","feat.drawn.t":"Canlı teknik çizimler","feat.drawn.b":"Mesnetler, yük okları, ölçü çizgileri, kesit görünüşleri — girdileri değiştirdikçe anında yeniden çizilir. Hazır görsel yok.","feat.offline.t":"Tamamen çevrimdışı","feat.offline.b":"Kendi başına ağa çıkmaz, hesap yok, reklam yok, izleme yok. Hesaplarınız cihazınızda kalır.","feat.fits.t":"ISO 286 geçmeler, hesaplanır","feat.fits.b":"Tolerans sınırları tablodan kopyalanmaz, standardın kendi formüllerinden hesaplanır.","feat.materials.t":"55 malzemelik kütüphane","feat.materials.b":"Bileşim, mekanik özellikler, standart karşılıkları, ısıl işlem durumları ve işlenebilirlik.","feat.units.t":"Birimler her yerde","feat.units.b":"Her ekrandan bir dokunuşla tam birim dönüştürücü; metrik ve ABD birim sistemleri.","pro.title":"Tek satın alma. Her şey.","pro.b":"Uygulamanın yarısından fazlası sonsuza dek ücretsiz. Pro tek seferlik bir satın almadır — abonelik yoktur — ve şunları açar:","pro.i1":"Bugünkü ve gelecekteki tüm hesap durumları","pro.i2":"PDF hesap raporları","pro.i3":"Proje kayıtları, sınırsız favori ve geçmiş","pro.i4":"Malzeme kartlarının mesleki bölümleri","pro.i5":"Karşılaştırma araçları ve özel malzeme kaydı","langs.title":"16 dil","langs.b":"English · Türkçe · Deutsch · Français · Italiano · Español · Português · Русский · 日本語 · 한국어 · 简体中文 · 繁體中文 · العربية · हिन्दी · Bahasa Indonesia · ไทย","footer.privacy":"Gizlilik Politikası","footer.rights":"Tüm hakları saklıdır.","gallery.title":"Nasıl görünüyor","gallery.b":"Uygulamanın kendi ekranları; her birinin ürettiği çizim yanında.","video.title":"Otuz saniyede çalışırken","video.b":"Yük sürgüsü kaydırılıyor; eğri, diyagramlar ve bütün sayılar peşinden geliyor.","nav.gallery":"Ekranlar"},"de":{"lang.name":"Deutsch","nav.features":"Funktionen","nav.pro":"Pro","nav.privacy":"Datenschutz","hero.badge":"Demnächst bei Google Play","hero.title":"Technische Berechnungen, die Sie zitieren können.","hero.sub":"230+ gelöste Fälle in 23 Kategorien — jede Formel mit Quellenangabe, jedes Ergebnis live als technische Zeichnung dargestellt. Vollständig offline, werbefrei.","demo.title":"Einfach gelagerter Träger — live","demo.load":"Last P","demo.caption":"Die Durchbiegung ist ×75 überhöht dargestellt; δ ist der wahre Wert. In der App wird jede Berechnung so dargestellt — live.","feat.title":"Gebaut, wie Ingenieure arbeiten","feat.cited.t":"Quellen, keine Legenden","feat.cited.b":"Jede Formel nennt ihr Buch oder ihre Norm, bis hinunter zu Kapitel oder Gleichung, und wird gegen gelöste Beispiele aus der Fachliteratur getestet.","feat.drawn.t":"Live technische Zeichnungen","feat.drawn.b":"Auflager, Lastpfeile, Maßlinien und Schnittansichten — sofort neu gezeichnet, sobald Sie die Eingaben ändern. Keine Stockfotos.","feat.offline.t":"Vollständig offline","feat.offline.b":"Keine eigene Netzverbindung, kein Konto, keine Werbung, kein Tracking. Ihre Berechnungen bleiben auf Ihrem Gerät.","feat.fits.t":"ISO-286-Passungen, berechnet","feat.fits.b":"Toleranzgrenzen werden aus den eigenen Formeln der Norm berechnet statt aus abgeschriebenen Tabellen.","feat.materials.t":"Werkstoffbibliothek mit 55 Materialien","feat.materials.b":"Zusammensetzung, mechanische Eigenschaften, Normäquivalente, Wärmebehandlungszustände und Zerspanbarkeit.","feat.units.t":"Einheiten überall","feat.units.b":"Ein vollständiger Einheitenrechner einen Fingertipp entfernt auf jedem Bildschirm; metrische und US-übliche Einheiten.","pro.title":"Ein Kauf. Alles.","pro.b":"Mehr als die Hälfte der App ist für immer kostenlos. Pro ist ein einmaliger Kauf — kein Abonnement —, der Folgendes freischaltet:","pro.i1":"Jeden Berechnungsfall, heutige und künftige","pro.i2":"PDF-Berechnungsberichte","pro.i3":"Gespeicherte Projekte, unbegrenzte Favoriten und Verlauf","pro.i4":"Fachliche Abschnitte der Werkstoffkarten","pro.i5":"Vergleichswerkzeuge und eigene Werkstoffe","langs.title":"16 Sprachen","langs.b":"English · Türkçe · Deutsch · Français · Italiano · Español · Português · Русский · 日本語 · 한국어 · 简体中文 · 繁體中文 · العربية · हिन्दी · Bahasa Indonesia · ไทย","footer.privacy":"Datenschutzerklärung","footer.rights":"Alle Rechte vorbehalten.","gallery.title":"So sieht es aus","gallery.b":"Bildschirme der App selbst, daneben die Zeichnung, die jeder erzeugt.","video.title":"Dreißig Sekunden im Betrieb","video.b":"Der Lastregler wird bewegt — Kurve, Diagramme und jede Zahl folgen.","nav.gallery":"Bildschirme"},"fr":{"lang.name":"Français","nav.features":"Fonctionnalités","nav.pro":"Pro","nav.privacy":"Confidentialité","hero.badge":"Bientôt disponible sur Google Play","hero.title":"Des calculs techniques que vous pouvez citer.","hero.sub":"230+ cas résolus répartis en 23 catégories — chaque formule sourcée, chaque résultat dessiné en direct sous forme de schéma technique. Entièrement hors ligne, sans publicité.","demo.title":"Poutre sur appuis simples — en direct","demo.load":"Charge P","demo.caption":"La flèche est exagérée ×75 ; δ est la valeur réelle. Dans l'application, chaque calcul est dessiné ainsi — en direct.","feat.title":"Conçu comme les ingénieurs travaillent","feat.cited.t":"Des sources, pas des légendes","feat.cited.b":"Chaque formule indique son livre ou sa norme, jusqu'au chapitre ou à l'équation, et est testée par rapport à des exemples résolus tirés de la littérature.","feat.drawn.t":"Schémas techniques en direct","feat.drawn.b":"Appuis, flèches de charge, lignes de cote et vues en coupe — redessinés instantanément dès que vous modifiez les données. Aucune image générique.","feat.offline.t":"Entièrement hors ligne","feat.offline.b":"Aucune connexion réseau propre, aucun compte, aucune publicité, aucun traçage. Vos calculs restent sur votre appareil.","feat.fits.t":"Ajustements ISO 286, calculés","feat.fits.b":"Les limites de tolérance sont calculées à partir des formules propres à la norme, et non recopiées depuis des tables.","feat.materials.t":"Bibliothèque de 55 matériaux","feat.materials.b":"Composition, propriétés mécaniques, équivalences normalisées, états de traitement thermique et usinabilité.","feat.units.t":"Des unités partout","feat.units.b":"Un convertisseur d'unités complet à portée d'un geste sur chaque écran ; systèmes métrique et impérial américain.","pro.title":"Un achat. Tout.","pro.b":"Plus de la moitié de l'application est gratuite, pour toujours. Pro est un achat unique — sans abonnement — qui débloque :","pro.i1":"Tous les cas de calcul, actuels et futurs","pro.i2":"Rapports de calcul PDF","pro.i3":"Projets enregistrés, favoris et historique illimités","pro.i4":"Sections professionnelles des fiches matériaux","pro.i5":"Outils de comparaison et matériaux personnalisés","langs.title":"16 langues","langs.b":"English · Türkçe · Deutsch · Français · Italiano · Español · Português · Русский · 日本語 · 한국어 · 简体中文 · 繁體中文 · العربية · हिन्दी · Bahasa Indonesia · ไทย","footer.privacy":"Politique de confidentialité","footer.rights":"Tous droits réservés.","gallery.title":"À quoi ça ressemble","gallery.b":"Des écrans de l'application, avec le dessin que chacun produit à côté.","video.title":"Trente secondes en fonctionnement","video.b":"Le curseur de charge bouge : la courbe, les diagrammes et tous les chiffres suivent.","nav.gallery":"Écrans"},"it":{"lang.name":"Italiano","nav.features":"Funzionalità","nav.pro":"Pro","nav.privacy":"Privacy","hero.badge":"Prossimamente su Google Play","hero.title":"Calcoli tecnici che puoi citare.","hero.sub":"230+ casi risolti in 23 categorie — ogni formula con la propria fonte, ogni risultato disegnato dal vivo come disegno tecnico. Completamente offline, senza pubblicità.","demo.title":"Trave semplicemente appoggiata — dal vivo","demo.load":"Carico P","demo.caption":"La freccia è esagerata ×75; δ è il valore reale. Nell'app, ogni calcolo è disegnato così — dal vivo.","feat.title":"Costruita come lavorano gli ingegneri","feat.cited.t":"Fonti, non leggende","feat.cited.b":"Ogni formula indica il proprio libro o la propria norma, fino al capitolo o all'equazione, ed è testata su esempi risolti tratti dalla letteratura.","feat.drawn.t":"Disegni tecnici dal vivo","feat.drawn.b":"Vincoli, frecce di carico, linee di quotatura e viste in sezione — ridisegnati all'istante non appena modifichi i dati. Nessuna immagine stock.","feat.offline.t":"Completamente offline","feat.offline.b":"Nessuna connessione di rete propria, nessun account, nessuna pubblicità, nessun tracciamento. I tuoi calcoli restano sul tuo dispositivo.","feat.fits.t":"Accoppiamenti ISO 286, calcolati","feat.fits.b":"I limiti di tolleranza sono calcolati dalle formule della norma stessa, invece che copiati da tabelle.","feat.materials.t":"Libreria di 55 materiali","feat.materials.b":"Composizione, proprietà meccaniche, equivalenze normalizzate, stati di trattamento termico e lavorabilità.","feat.units.t":"Unità ovunque","feat.units.b":"Un convertitore di unità completo a portata di tocco su ogni schermata; sistema metrico e unità consuetudinarie statunitensi.","pro.title":"Un acquisto. Tutto.","pro.b":"Più della metà dell'app è gratuita per sempre. Pro è un acquisto unico — nessun abbonamento — che sblocca:","pro.i1":"Tutti i casi di calcolo, presenti e futuri","pro.i2":"Rapporti di calcolo PDF","pro.i3":"Progetti salvati, preferiti e cronologia illimitati","pro.i4":"Sezioni professionali delle schede materiali","pro.i5":"Strumenti di confronto e materiali personalizzati","langs.title":"16 lingue","langs.b":"English · Türkçe · Deutsch · Français · Italiano · Español · Português · Русский · 日本語 · 한국어 · 简体中文 · 繁體中文 · العربية · हिन्दी · Bahasa Indonesia · ไทย","footer.privacy":"Informativa sulla privacy","footer.rights":"Tutti i diritti riservati.","gallery.title":"Che aspetto ha","gallery.b":"Schermate dell'app, con accanto il disegno che ciascuna produce.","video.title":"Trenta secondi in funzione","video.b":"Il cursore del carico si muove: curva, diagrammi e ogni numero lo seguono.","nav.gallery":"Schermate"},"es":{"lang.name":"Español","nav.features":"Características","nav.pro":"Pro","nav.privacy":"Privacidad","hero.badge":"Próximamente en Google Play","hero.title":"Cálculos de ingeniería que puedes citar.","hero.sub":"230+ casos resueltos en 23 categorías — cada fórmula con su fuente, cada resultado dibujado en vivo como un plano técnico. Totalmente sin conexión, sin anuncios.","demo.title":"Viga simplemente apoyada — en vivo","demo.load":"Carga P","demo.caption":"La flecha se dibuja con una exageración de ×75; δ es el valor real. En la app, cada cálculo se dibuja así, en vivo.","feat.title":"Construida como trabajan los ingenieros","feat.cited.t":"Fuentes, no folclore","feat.cited.b":"Cada fórmula indica su libro o norma, hasta el capítulo o la ecuación, y está probada con ejemplos resueltos de la bibliografía.","feat.drawn.t":"Planos técnicos en vivo","feat.drawn.b":"Apoyos, flechas de carga, líneas de cota y vistas en sección — redibujados al instante al cambiar los datos de entrada. Sin imágenes de archivo.","feat.offline.t":"Totalmente sin conexión","feat.offline.b":"Sin conexión de red propia, sin cuenta, sin anuncios, sin rastreo. Tus cálculos se quedan en tu dispositivo.","feat.fits.t":"Ajustes ISO 286, calculados","feat.fits.b":"Los límites de tolerancia se calculan con las fórmulas del propio estándar, no se copian de tablas.","feat.materials.t":"Biblioteca de 55 materiales","feat.materials.b":"Composición, propiedades mecánicas, equivalencias normalizadas, estados de tratamiento térmico y maquinabilidad.","feat.units.t":"Unidades en todas partes","feat.units.b":"Un conversor de unidades completo a un toque en cada pantalla; sistemas métrico y estadounidense.","pro.title":"Una compra. Todo.","pro.b":"Más de la mitad de la app es gratis, para siempre. Pro es una compra única — sin suscripción — que desbloquea:","pro.i1":"Todos los casos de cálculo, los de hoy y los futuros","pro.i2":"Informes de cálculo en PDF","pro.i3":"Proyectos guardados, favoritos e historial ilimitados","pro.i4":"Secciones profesionales de las fichas de materiales","pro.i5":"Herramientas de comparación y materiales personalizados","langs.title":"16 idiomas","langs.b":"English · Türkçe · Deutsch · Français · Italiano · Español · Português · Русский · 日本語 · 한국어 · 简体中文 · 繁體中文 · العربية · हिन्दी · Bahasa Indonesia · ไทย","footer.privacy":"Política de privacidad","footer.rights":"Todos los derechos reservados.","gallery.title":"Qué aspecto tiene","gallery.b":"Pantallas de la propia app, con el dibujo que cada una produce al lado.","video.title":"Treinta segundos funcionando","video.b":"Se mueve el deslizador de carga: la curva, los diagramas y cada número lo siguen.","nav.gallery":"Pantallas"},"pt":{"lang.name":"Português","nav.features":"Recursos","nav.pro":"Pro","nav.privacy":"Privacidade","hero.badge":"Em breve no Google Play","hero.title":"Cálculos de engenharia que você pode citar.","hero.sub":"230+ casos resolvidos em 23 categorias — cada fórmula com sua fonte, cada resultado desenhado ao vivo como um desenho técnico. Totalmente offline, sem anúncios.","demo.title":"Viga simplesmente apoiada — ao vivo","demo.load":"Carga P","demo.caption":"A flecha é desenhada com exagero de ×75; δ é o valor real. No app, cada cálculo é desenhado assim, ao vivo.","feat.title":"Construído do jeito que os engenheiros trabalham","feat.cited.t":"Fontes, não folclore","feat.cited.b":"Cada fórmula indica seu livro ou norma, até o capítulo ou a equação, e é testada com exemplos resolvidos da literatura.","feat.drawn.t":"Desenhos técnicos ao vivo","feat.drawn.b":"Apoios, setas de carga, linhas de cota e vistas em corte — redesenhados instantaneamente conforme você muda os dados de entrada. Nenhuma imagem de banco.","feat.offline.t":"Totalmente offline","feat.offline.b":"Sem conexão de rede própria, sem conta, sem anúncios, sem rastreamento. Seus cálculos ficam no seu aparelho.","feat.fits.t":"Ajustes ISO 286, calculados","feat.fits.b":"Os limites de tolerância são calculados pelas fórmulas da própria norma, e não copiados de tabelas.","feat.materials.t":"Biblioteca de 55 materiais","feat.materials.b":"Composição, propriedades mecânicas, equivalências normalizadas, estados de tratamento térmico e usinabilidade.","feat.units.t":"Unidades em todo lugar","feat.units.b":"Um conversor de unidades completo a um toque em cada tela; sistemas métrico e americano.","pro.title":"Uma compra. Tudo.","pro.b":"Mais da metade do app é grátis, para sempre. O Pro é uma compra única — sem assinatura — que libera:","pro.i1":"Todos os casos de cálculo, de hoje e os futuros","pro.i2":"Relatórios de cálculo em PDF","pro.i3":"Projetos salvos, favoritos e histórico ilimitados","pro.i4":"Seções profissionais das fichas de materiais","pro.i5":"Ferramentas de comparação e materiais personalizados","langs.title":"16 idiomas","langs.b":"English · Türkçe · Deutsch · Français · Italiano · Español · Português · Русский · 日本語 · 한국어 · 简体中文 · 繁體中文 · العربية · हिन्दी · Bahasa Indonesia · ไทย","footer.privacy":"Política de Privacidade","footer.rights":"Todos os direitos reservados.","gallery.title":"Que aspeto tem","gallery.b":"Ecrãs da própria aplicação, com o desenho que cada um produz ao lado.","video.title":"Trinta segundos a funcionar","video.b":"O cursor da carga move-se: a curva, os diagramas e todos os números acompanham.","nav.gallery":"Ecrãs"},"ru":{"lang.name":"Русский","nav.features":"Возможности","nav.pro":"Pro","nav.privacy":"Конфиденциальность","hero.badge":"Скоро в Google Play","hero.title":"Инженерные расчёты со ссылкой на источник.","hero.sub":"230+ решённых случаев в 23 категориях — у каждой формулы указан источник, каждый результат рисуется вживую как технический чертёж. Полностью офлайн, без рекламы.","demo.title":"Шарнирно опёртая балка — вживую","demo.load":"Нагрузка P","demo.caption":"Прогиб показан с увеличением ×75; δ — истинное значение. В приложении так рисуется каждый расчёт — вживую.","feat.title":"Сделано так, как работают инженеры","feat.cited.t":"Источники, а не домыслы","feat.cited.b":"У каждой формулы указаны книга или стандарт, вплоть до главы или уравнения, и она проверена на решённых примерах из литературы.","feat.drawn.t":"Живые технические чертежи","feat.drawn.b":"Опоры, стрелки нагрузок, размерные линии и виды в разрезе — перерисовываются мгновенно при изменении входных данных. Никаких готовых изображений.","feat.offline.t":"Полностью офлайн","feat.offline.b":"Без собственных сетевых подключений, без аккаунта, без рекламы, без слежки. Ваши расчёты остаются на вашем устройстве.","feat.fits.t":"Посадки ISO 286 — вычисляются","feat.fits.b":"Пределы допусков вычисляются по формулам самого стандарта, а не берутся из готовых таблиц.","feat.materials.t":"Библиотека из 55 материалов","feat.materials.b":"Состав, механические свойства, стандартные аналоги, состояния термообработки и обрабатываемость.","feat.units.t":"Единицы измерения везде","feat.units.b":"Полный конвертер единиц в одно касание на любом экране; метрическая и американская системы.","pro.title":"Одна покупка. Всё.","pro.b":"Больше половины приложения бесплатно, навсегда. Pro — это разовая покупка без подписки, которая открывает:","pro.i1":"Все расчётные случаи, сегодняшние и будущие","pro.i2":"PDF-отчёты по расчётам","pro.i3":"Сохранённые проекты, неограниченное избранное и историю","pro.i4":"Профессиональные разделы карточек материалов","pro.i5":"Инструменты сравнения и собственные материалы","langs.title":"16 языков","langs.b":"English · Türkçe · Deutsch · Français · Italiano · Español · Português · Русский · 日本語 · 한국어 · 简体中文 · 繁體中文 · العربية · हिन्दी · Bahasa Indonesia · ไทย","footer.privacy":"Политика конфиденциальности","footer.rights":"Все права защищены.","gallery.title":"Как это выглядит","gallery.b":"Экраны самого приложения и рядом чертёж, который каждый из них строит.","video.title":"Тридцать секунд в работе","video.b":"Ползунок нагрузки движется — кривая, эпюры и все числа следуют за ним.","nav.gallery":"Экраны"},"ja":{"lang.name":"日本語","nav.features":"機能","nav.pro":"Pro","nav.privacy":"プライバシー","hero.badge":"Google Playで近日公開","hero.title":"出典を示せる工学計算。","hero.sub":"23カテゴリ、230以上の計算例 — すべての式に出典があり、すべての結果が図面として動きます。完全オフライン、広告なし。","demo.title":"単純支持はり — ライブ","demo.load":"荷重 P","demo.caption":"たわみは75倍に誇張して描いています。δが実際の値です。アプリでは、すべての計算がこのように、その場で描かれます。","feat.title":"技術者の仕事のしかたに合わせて","feat.cited.t":"うわさ話ではなく、出典","feat.cited.b":"すべての式が、書籍や規格の章・式番号まで出典を示し、文献の計算例で検証されています。","feat.drawn.t":"動く図面","feat.drawn.b":"支点、荷重矢印、寸法線、断面図 — 入力を変えるたびに即座に描き直されます。既製の画像は使いません。","feat.offline.t":"完全オフライン","feat.offline.b":"アプリ自身はネットワークに接続しません。アカウントなし、広告なし、追跡なし。計算はすべて端末の中に残ります。","feat.fits.t":"計算で求めるISO 286はめあい","feat.fits.b":"公差の限界値は、表の転記ではなく規格自体の式から計算します。","feat.materials.t":"工学材料55種のライブラリ","feat.materials.b":"化学成分、力学的性質、規格対応、熱処理状態、被削性まで。","feat.units.t":"どこでも単位換算","feat.units.b":"どの画面からもワンタップで使える単位換算 — メートル法とヤード・ポンド法に対応。","pro.title":"一度の購入で、すべてに。","pro.b":"アプリの半分以上は、ずっと無料です。Proは一度きりの買い切り — 定期課金なし — で、次を解放します:","pro.i1":"今後追加されるものも含む、すべての計算","pro.i2":"PDFの計算レポート","pro.i3":"プロジェクト保存、お気に入りと履歴が無制限","pro.i4":"材料カードの専門項目","pro.i5":"比較ツールと自分の材料の登録","langs.title":"16言語","langs.b":"English · Türkçe · Deutsch · Français · Italiano · Español · Português · Русский · 日本語 · 한국어 · 简体中文 · 繁體中文 · العربية · हिन्दी · Bahasa Indonesia · ไทย","footer.privacy":"プライバシーポリシー","footer.rights":"無断転載を禁じます。","gallery.title":"こんな画面です","gallery.b":"アプリの実際の画面と、それぞれが描く図。","video.title":"動いているところを30秒","video.b":"荷重スライダーを動かすと、たわみ曲線も図も数値もついてきます。","nav.gallery":"画面"},"ko":{"lang.name":"한국어","nav.features":"기능","nav.pro":"Pro","nav.privacy":"개인정보","hero.badge":"Google Play 출시 예정","hero.title":"출처를 밝힐 수 있는 공학 계산.","hero.sub":"23개 분류에 걸친 계산 사례 230개 이상 — 모든 식에 출처가 있고, 모든 결과가 실시간 도면으로 그려집니다. 완전 오프라인, 광고 없음.","demo.title":"단순 지지 보 — 실시간","demo.load":"하중 P","demo.caption":"처짐은 75배로 과장해서 그렸습니다. δ가 실제 값입니다. 앱에서는 모든 계산이 이렇게 실시간으로 그려집니다.","feat.title":"기술자가 일하는 방식 그대로","feat.cited.t":"떠도는 말이 아니라 출처","feat.cited.b":"모든 식이 책이나 규격의 장, 식 번호까지 출처를 밝히며, 문헌의 계산 예제로 검증됩니다.","feat.drawn.t":"실시간 도면","feat.drawn.b":"지지점, 하중 화살표, 치수선, 단면도 — 입력을 바꾸는 즉시 다시 그려집니다. 미리 만든 그림은 없습니다.","feat.offline.t":"완전 오프라인","feat.offline.b":"앱 자체는 네트워크에 연결하지 않음, 계정 없음, 광고 없음, 추적 없음. 계산은 기기 안에만 남습니다.","feat.fits.t":"계산으로 구하는 ISO 286 끼워맞춤","feat.fits.b":"공차 한계값은 표를 옮긴 것이 아니라 규격 자체의 식으로 계산합니다.","feat.materials.t":"공학 재료 55종 라이브러리","feat.materials.b":"화학성분, 기계적 물성, 규격 대응, 열처리 상태, 피삭성까지.","feat.units.t":"어디서나 단위 변환","feat.units.b":"어느 화면에서나 탭 한 번으로 쓰는 완전한 단위 변환기 — 미터법과 야드파운드법 지원.","pro.title":"한 번 구매로, 전부.","pro.b":"앱의 절반 이상은 언제나 무료입니다. Pro는 한 번뿐인 구매 — 구독 없음 — 로 다음을 열어줍니다:","pro.i1":"오늘과 앞으로의 모든 계산 사례","pro.i2":"PDF 계산 보고서","pro.i3":"프로젝트 저장, 즐겨찾기와 기록 무제한","pro.i4":"재료 카드의 전문 항목","pro.i5":"비교 도구와 직접 만든 재료","langs.title":"16개 언어","langs.b":"English · Türkçe · Deutsch · Français · Italiano · Español · Português · Русский · 日本語 · 한국어 · 简体中文 · 繁體中文 · العربية · हिन्दी · Bahasa Indonesia · ไทย","footer.privacy":"개인정보처리방침","footer.rights":"모든 권리 보유.","gallery.title":"이렇게 생겼습니다","gallery.b":"앱의 실제 화면과 각 화면이 그리는 도면.","video.title":"작동하는 30초","video.b":"하중 슬라이더를 움직이면 곡선도 선도도 모든 수치도 따라옵니다.","nav.gallery":"화면"},"zh_Hans":{"lang.name":"简体中文","nav.features":"功能","nav.pro":"Pro","nav.privacy":"隐私","hero.badge":"即将登陆 Google Play","hero.title":"有据可查的工程计算。","hero.sub":"23 个分类，230+ 项计算实例——每个公式都标注来源，每个结果都以动态图纸呈现。完全离线，无广告。","demo.title":"简支梁 — 实时","demo.load":"载荷 P","demo.caption":"挠度按 75 倍夸张画出；δ 才是真实值。在应用里，每项计算都是这样实时画出来的。","feat.title":"按工程师的实际工作方式打造","feat.cited.t":"有据可查，不是道听途说","feat.cited.b":"每个公式都标注书籍或标准的出处，精确到章节或公式编号，并用文献中的算例验证过。","feat.drawn.t":"动态图纸","feat.drawn.b":"支座、载荷箭头、尺寸线、剖视图——随输入改变立即重绘。没有一张是现成图片。","feat.offline.t":"完全离线","feat.offline.b":"应用自身不联网，不需要账号，没有广告，不追踪。你的计算只留在你的设备上。","feat.fits.t":"算出来的 ISO 286 配合","feat.fits.b":"公差极限值由标准自身的公式算出，而不是抄现成的表。","feat.materials.t":"55 种材料库","feat.materials.b":"化学成分、力学性能、标准对照、热处理状态与切削加工性。","feat.units.t":"处处可用的单位换算","feat.units.b":"每个界面一键可用的完整单位换算器，支持公制与美制单位。","pro.title":"买一次，用一辈子。","pro.b":"应用里一半以上的内容永久免费。Pro 是一次性购买——没有订阅——解锁以下内容：","pro.i1":"全部计算实例，包括今天和以后新增的","pro.i2":"PDF 计算报告","pro.i3":"保存项目，收藏与历史不限量","pro.i4":"材料卡片的专业部分","pro.i5":"对比工具与自定义材料","langs.title":"16 种语言","langs.b":"English · Türkçe · Deutsch · Français · Italiano · Español · Português · Русский · 日本語 · 한국어 · 简体中文 · 繁體中文 · العربية · हिन्दी · Bahasa Indonesia · ไทย","footer.privacy":"隐私政策","footer.rights":"版权所有。","gallery.title":"长什么样","gallery.b":"应用自己的界面，旁边是每个界面画出的图。","video.title":"三十秒看它运行","video.b":"拖动荷载滑块，挠曲线、内力图和所有数值一起变。","nav.gallery":"界面"},"zh_Hant":{"lang.name":"繁體中文","nav.features":"功能","nav.pro":"Pro","nav.privacy":"隱私","hero.badge":"即將登陸 Google Play","hero.title":"有據可查的工程計算。","hero.sub":"23 個分類，230+ 項計算實例——每個公式都標註來源，每個結果都以動態圖面呈現。完全離線，無廣告。","demo.title":"簡支梁 — 即時","demo.load":"載重 P","demo.caption":"撓度以 75 倍誇張畫出；δ 才是真實值。在應用程式裡，每項計算都是這樣即時畫出來的。","feat.title":"按工程師的實際工作方式打造","feat.cited.t":"有據可查，不是道聽途說","feat.cited.b":"每個公式都標註書籍或標準的出處，精確到章節或公式編號，並用文獻中的算例驗證過。","feat.drawn.t":"動態圖面","feat.drawn.b":"支座、載重箭頭、尺寸線、剖視圖——隨輸入改變立即重繪。沒有一張是現成圖片。","feat.offline.t":"完全離線","feat.offline.b":"應用程式本身不連網，不需要帳號，沒有廣告，不追蹤。你的計算只留在你的裝置上。","feat.fits.t":"算出來的 ISO 286 配合","feat.fits.b":"公差極限值由標準本身的公式算出，而不是抄現成的表。","feat.materials.t":"55 種材料庫","feat.materials.b":"化學成分、力學性能、規格對照、熱處理狀態與切削加工性。","feat.units.t":"處處可用的單位換算","feat.units.b":"每個畫面一鍵可用的完整單位換算器，支援公制與美制單位。","pro.title":"買一次，用一輩子。","pro.b":"應用程式裡一半以上的內容永久免費。Pro 是一次性購買——沒有訂閱——解鎖以下內容：","pro.i1":"全部計算實例，包括今天和日後新增的","pro.i2":"PDF 計算報告","pro.i3":"儲存專案，我的最愛與紀錄不限量","pro.i4":"材料卡片的專業部分","pro.i5":"比較工具與自訂材料","langs.title":"16 種語言","langs.b":"English · Türkçe · Deutsch · Français · Italiano · Español · Português · Русский · 日本語 · 한국어 · 简体中文 · 繁體中文 · العربية · हिन्दी · Bahasa Indonesia · ไทย","footer.privacy":"隱私權政策","footer.rights":"版權所有。","gallery.title":"長什麼樣","gallery.b":"應用自己的畫面，旁邊是每個畫面畫出的圖。","video.title":"三十秒看它運作","video.b":"拖動載重滑桿，撓曲線、內力圖和所有數值一起變。","nav.gallery":"畫面"},"ar":{"lang.name":"العربية","nav.features":"الميزات","nav.pro":"Pro","nav.privacy":"الخصوصية","hero.badge":"قريبًا على Google Play","hero.title":"حسابات هندسية بمصدر موثّق.","hero.sub":"230+ حالة محلولة في 23 فئة — كل معادلة موثّقة المصدر، وكل نتيجة تُرسم حيًا كرسم تقني. دون إنترنت كليًا، بلا إعلانات.","demo.title":"عارضة بسيطة الإسناد — حيّة","demo.load":"الحمل P","demo.caption":"الانحراف مرسوم مُكبَّرًا ×75؛ δ هي القيمة الحقيقية. وفي التطبيق يُرسم كل حساب هكذا — حيًا.","feat.title":"مبني على طريقة عمل المهندسين","feat.cited.t":"مصدر، لا سماع","feat.cited.b":"كل معادلة تذكر كتابها أو معيارها، حتى رقم الفصل أو المعادلة، وتُختبر بأمثلة محلولة من المراجع.","feat.drawn.t":"رسوم تقنية حية","feat.drawn.b":"المساند وأسهم الحمل وخطوط الأبعاد ومناظر المقاطع — تُعاد رسمها فورًا مع تغييرك للمدخلات. لا صور جاهزة.","feat.offline.t":"دون إنترنت كليًا","feat.offline.b":"لا يتصل التطبيق بالشبكة من تلقاء نفسه، بلا حساب، بلا إعلانات، بلا تتبّع. حساباتك تبقى على جهازك.","feat.fits.t":"تعشيقات ISO 286، محسوبة","feat.fits.b":"حدود التفاوت تُحسب من معادلات المعيار نفسه، لا من جداول منسوخة.","feat.materials.t":"مكتبة 55 مادة","feat.materials.b":"التركيب، الخواص الميكانيكية، المكافئات القياسية، حالات المعالجة الحرارية، وقابلية التشغيل.","feat.units.t":"الوحدات في كل مكان","feat.units.b":"محوّل وحدات كامل بلمسة واحدة من كل شاشة؛ النظامان المتري والأمريكي.","pro.title":"شراء واحد. كل شيء.","pro.b":"أكثر من نصف التطبيق مجاني، للأبد. Pro شراء لمرة واحدة — بلا اشتراك — يفتح:","pro.i1":"كل حالة حساب، الحالية والمستقبلية","pro.i2":"تقارير حساب بصيغة PDF","pro.i3":"مشاريع محفوظة، ومفضلة وسجل بلا حدود","pro.i4":"الأقسام المهنية من بطاقات المواد","pro.i5":"أدوات مقارنة ومواد مخصّصة","langs.title":"16 لغة","langs.b":"English · Türkçe · Deutsch · Français · Italiano · Español · Português · Русский · 日本語 · 한국어 · 简体中文 · 繁體中文 · العربية · हिन्दी · Bahasa Indonesia · ไทย","footer.privacy":"سياسة الخصوصية","footer.rights":"جميع الحقوق محفوظة.","gallery.title":"كيف يبدو","gallery.b":"شاشات من التطبيق نفسه، وبجانب كل واحدة الرسم الذي تنتجه.","video.title":"ثلاثون ثانية أثناء العمل","video.b":"يتحرك منزلق الحمل، فيتبعه المنحنى والمخططات وكل رقم.","nav.gallery":"الشاشات"},"hi":{"lang.name":"हिन्दी","nav.features":"विशेषताएँ","nav.pro":"Pro","nav.privacy":"गोपनीयता","hero.badge":"जल्द ही Google Play पर","hero.title":"इंजीनियरिंग परिकलन, जिनका स्रोत आप बता सकें।","hero.sub":"23 श्रेणियों में 230+ हल की गई स्थितियाँ — हर सूत्र स्रोत-सहित, हर परिणाम जीवंत तकनीकी चित्र के रूप में। पूरी तरह ऑफ़लाइन, बिना विज्ञापन।","demo.title":"सरल आधारित बीम — जीवंत","demo.load":"भार P","demo.caption":"विक्षेपण ×75 बढ़ा-चढ़ाकर दिखाया गया है; δ असली मान है। ऐप में हर परिकलन इसी तरह, जीवंत खींचा जाता है।","feat.title":"इंजीनियरों के काम करने के तरीक़े पर बना","feat.cited.t":"किंवदंती नहीं, स्रोत","feat.cited.b":"हर सूत्र अपनी पुस्तक या मानक बताता है, अध्याय या समीकरण तक, और साहित्य के हल किए गए उदाहरणों से जाँचा गया है।","feat.drawn.t":"जीवंत तकनीकी चित्र","feat.drawn.b":"आधार, भार तीर, माप रेखाएँ और काट दृश्य — इनपुट बदलते ही तुरंत फिर से खींचे जाते हैं। कोई स्टॉक इमेज नहीं।","feat.offline.t":"पूरी तरह ऑफ़लाइन","feat.offline.b":"ऐप खुद कोई नेटवर्क कनेक्शन नहीं बनाता, न खाता, न विज्ञापन, न ट्रैकिंग। आपके परिकलन आपके डिवाइस पर ही रहते हैं।","feat.fits.t":"ISO 286 फिट, गणना की गई","feat.fits.b":"सह्यता सीमाएँ नक़ल की गई तालिकाओं की बजाय मानक के अपने सूत्रों से निकाली जाती हैं।","feat.materials.t":"55 पदार्थों का संग्रह","feat.materials.b":"संघटन, यांत्रिक गुण, मानक समतुल्य, ऊष्मा-उपचार अवस्थाएँ और मशीनी क्षमता।","feat.units.t":"हर जगह इकाइयाँ","feat.units.b":"हर स्क्रीन पर एक टैप दूर पूरा इकाई परिवर्तक; मीट्रिक और अमेरिकी दोनों प्रणालियाँ।","pro.title":"एक ख़रीद। सब कुछ।","pro.b":"ऐप का आधे से अधिक हिस्सा हमेशा के लिए मुफ़्त है। Pro एक बार की ख़रीद है — कोई सदस्यता नहीं — जो खोलती है:","pro.i1":"हर परिकलन स्थिति, आज की और आगे आने वाली","pro.i2":"PDF परिकलन रिपोर्ट","pro.i3":"सहेजी गई परियोजनाएँ, असीमित पसंदीदा और इतिहास","pro.i4":"पदार्थ कार्ड के व्यावसायिक भाग","pro.i5":"तुलना उपकरण और कस्टम पदार्थ","langs.title":"16 भाषाएँ","langs.b":"English · Türkçe · Deutsch · Français · Italiano · Español · Português · Русский · 日本語 · 한국어 · 简体中文 · 繁體中文 · العربية · हिन्दी · Bahasa Indonesia · ไทย","footer.privacy":"गोपनीयता नीति","footer.rights":"सर्वाधिकार सुरक्षित।","gallery.title":"यह ऐसा दिखता है","gallery.b":"ऐप की अपनी स्क्रीनें, और साथ में हर स्क्रीन का बनाया चित्र।","video.title":"तीस सेकंड में काम करते हुए","video.b":"भार स्लाइडर हिलता है — वक्र, आरेख और हर संख्या साथ बदलते हैं।","nav.gallery":"स्क्रीनें"},"id":{"lang.name":"Bahasa Indonesia","nav.features":"Fitur","nav.pro":"Pro","nav.privacy":"Privasi","hero.badge":"Segera hadir di Google Play","hero.title":"Perhitungan teknik yang bisa Anda buktikan sumbernya.","hero.sub":"230+ kasus terpecahkan di 23 kategori — setiap rumus bersumber, setiap hasil digambar langsung sebagai gambar teknik. Sepenuhnya luring, tanpa iklan.","demo.title":"Balok tumpuan sederhana — langsung","demo.load":"Beban P","demo.caption":"Lendutan digambar dilebih-lebihkan ×75; δ adalah nilai sebenarnya. Di aplikasi, setiap perhitungan digambar seperti ini — langsung.","feat.title":"Dibangun sesuai cara kerja insinyur","feat.cited.t":"Bersumber, bukan katanya","feat.cited.b":"Setiap rumus menyebutkan buku atau standarnya, sampai ke bab atau persamaan, dan diuji terhadap contoh terpecahkan dari literatur.","feat.drawn.t":"Gambar teknik langsung","feat.drawn.b":"Tumpuan, panah beban, garis dimensi, dan tampak potongan — digambar ulang seketika saat Anda mengubah masukan. Tanpa gambar template.","feat.offline.t":"Sepenuhnya luring","feat.offline.b":"Aplikasi tidak membuat koneksi jaringan sendiri, tanpa akun, tanpa iklan, tanpa pelacakan. Perhitungan Anda tetap ada di perangkat Anda.","feat.fits.t":"Suaian ISO 286, terhitung","feat.fits.b":"Batas toleransi dihitung dari rumus standar itu sendiri, bukan disalin dari tabel.","feat.materials.t":"Pustaka 55 bahan","feat.materials.b":"Komposisi, sifat mekanis, padanan standar, kondisi perlakuan panas, dan kemudahan permesinan.","feat.units.t":"Satuan di mana-mana","feat.units.b":"Konverter satuan lengkap satu sentuhan di setiap layar; sistem metrik dan Amerika Serikat.","pro.title":"Satu pembelian. Semuanya.","pro.b":"Lebih dari separuh aplikasi gratis, selamanya. Pro adalah pembelian sekali bayar — tanpa langganan — yang membuka:","pro.i1":"Setiap kasus perhitungan, hari ini dan masa depan","pro.i2":"Laporan perhitungan PDF","pro.i3":"Proyek tersimpan, favorit dan riwayat tanpa batas","pro.i4":"Bagian profesional pada kartu bahan","pro.i5":"Alat pembanding dan bahan khusus","langs.title":"16 bahasa","langs.b":"English · Türkçe · Deutsch · Français · Italiano · Español · Português · Русский · 日本語 · 한국어 · 简体中文 · 繁體中文 · العربية · हिन्दी · Bahasa Indonesia · ไทย","footer.privacy":"Kebijakan Privasi","footer.rights":"Hak cipta dilindungi.","gallery.title":"Seperti apa tampilannya","gallery.b":"Layar dari aplikasinya sendiri, dengan gambar yang dihasilkan masing-masing di sampingnya.","video.title":"Tiga puluh detik saat bekerja","video.b":"Penggeser beban digerakkan: kurva, diagram dan semua angkanya ikut.","nav.gallery":"Layar"},"th":{"lang.name":"ไทย","nav.features":"ฟีเจอร์","nav.pro":"Pro","nav.privacy":"ความเป็นส่วนตัว","hero.badge":"เร็ว ๆ นี้บน Google Play","hero.title":"การคำนวณวิศวกรรมที่อ้างอิงแหล่งที่มาได้","hero.sub":"กรณีที่แก้แล้ว 230+ กรณีใน 23 หมวดหมู่ — ทุกสูตรมีที่มา ทุกผลลัพธ์วาดสดเป็นภาพเทคนิค ทำงานออฟไลน์เต็มรูปแบบ ไม่มีโฆษณา","demo.title":"คานรองรับอย่างง่าย — สด","demo.load":"ภาระ P","demo.caption":"การโก่งวาดเกินจริง ×75 เท่า δ คือค่าจริง ในแอป ทุกการคำนวณถูกวาดแบบนี้ — สด","feat.title":"สร้างตามวิธีที่วิศวกรทำงาน","feat.cited.t":"มีที่มา ไม่ใช่คำเล่าลือ","feat.cited.b":"ทุกสูตรระบุหนังสือหรือมาตรฐานของตน ไปจนถึงบทหรือสมการ และผ่านการทดสอบเทียบกับตัวอย่างที่แก้แล้วจากเอกสารอ้างอิง","feat.drawn.t":"ภาพเทคนิคสด","feat.drawn.b":"ตัวรองรับ ลูกศรแรง เส้นบอกขนาด และมุมมองหน้าตัด — วาดใหม่ทันทีเมื่อคุณเปลี่ยนค่าที่ป้อน ไม่มีภาพสำเร็จรูป","feat.offline.t":"ออฟไลน์เต็มรูปแบบ","feat.offline.b":"แอปไม่เชื่อมต่อเครือข่ายด้วยตัวเอง ไม่มีบัญชี ไม่มีโฆษณา ไม่มีการติดตาม การคำนวณของคุณอยู่ในเครื่องของคุณเท่านั้น","feat.fits.t":"การสวม ISO 286 แบบคำนวณ","feat.fits.b":"ค่าพิกัดความเผื่อคำนวณจากสูตรของมาตรฐานเอง แทนที่จะคัดลอกจากตาราง","feat.materials.t":"คลังวัสดุ 55 ชนิด","feat.materials.b":"ส่วนประกอบ คุณสมบัติเชิงกล มาตรฐานเทียบเท่า สถานะการอบชุบด้วยความร้อน และความสามารถในการกลึง","feat.units.t":"หน่วยอยู่ทุกที่","feat.units.b":"ตัวแปลงหน่วยครบชุดแตะเดียวถึงจากทุกหน้าจอ ทั้งระบบเมตริกและระบบสหรัฐฯ","pro.title":"ซื้อครั้งเดียว ได้ทุกอย่าง","pro.b":"กว่าครึ่งของแอปใช้ได้ฟรีตลอดไป Pro คือการซื้อครั้งเดียว ไม่มีการสมัครสมาชิก ที่ปลดล็อก:","pro.i1":"ทุกกรณีการคำนวณ ทั้งวันนี้และที่จะเพิ่มในอนาคต","pro.i2":"รายงานการคำนวณแบบ PDF","pro.i3":"โครงการที่บันทึกไว้ รายการโปรดและประวัติแบบไม่จำกัด","pro.i4":"ส่วนข้อมูลระดับมืออาชีพของบัตรวัสดุ","pro.i5":"เครื่องมือเปรียบเทียบและวัสดุกำหนดเอง","langs.title":"16 ภาษา","langs.b":"English · Türkçe · Deutsch · Français · Italiano · Español · Português · Русский · 日本語 · 한국어 · 简体中文 · 繁體中文 · العربية · हिन्दी · Bahasa Indonesia · ไทย","footer.privacy":"นโยบายความเป็นส่วนตัว","footer.rights":"สงวนลิขสิทธิ์","gallery.title":"หน้าตาเป็นอย่างไร","gallery.b":"หน้าจอจากตัวแอปเอง พร้อมภาพที่แต่ละหน้าจอวาดออกมา","video.title":"สามสิบวินาทีตอนทำงาน","video.b":"เลื่อนแถบน้ำหนักบรรทุก เส้นโค้ง แผนภาพ และทุกตัวเลขเปลี่ยนตาม","nav.gallery":"หน้าจอ"}}</script>
+<!-- I18N:END -->
+<script>
+(function(){
+  "use strict";
+  var data = {};
+  try { data = JSON.parse(document.getElementById("i18n-data").textContent) || {}; } catch (e) {}
+  var langs = Object.keys(data);
+  if (langs.indexOf("en") < 0) langs.unshift("en");
+  var sel = document.getElementById("lang");
+  langs.forEach(function(code){
+    var o = document.createElement("option");
+    o.value = code;
+    o.textContent = (data[code] && data[code]["lang.name"]) || code;
+    sel.appendChild(o);
+  });
+  function pick(){
+    var q = new URLSearchParams(location.search).get("lang");
+    var s = null; try { s = localStorage.getItem("lang"); } catch (e) {}
+    var n = (navigator.language || "en").toLowerCase();
+    var nav = langs.filter(function(c){ return n.indexOf(c.toLowerCase().slice(0,2)) === 0; })[0];
+    if (n.indexOf("zh") === 0) nav = (n.indexOf("tw")>=0 || n.indexOf("hant")>=0) ? "zh_Hant" : "zh_Hans";
+    return [q, s, nav, "en"].filter(function(c){ return c && langs.indexOf(c) >= 0; })[0];
+  }
+  function t(code, key){
+    return (data[code] && data[code][key]) || (data.en && data.en[key]) || null;
+  }
+  function apply(code){
+    sel.value = code;
+    try { localStorage.setItem("lang", code); } catch (e) {}
+    document.documentElement.lang = code.replace("_","-");
+    document.documentElement.dir = (code === "ar") ? "rtl" : "ltr";
+    document.querySelectorAll("[data-i18n]").forEach(function(el){
+      var v = t(code, el.getAttribute("data-i18n"));
+      if (v) el.textContent = v;
+    });
+  }
+  sel.addEventListener("change", function(){ apply(sel.value); });
+  apply(pick());
+
+  // Live beam demo — simply supported beam, central point load.
+  // Roark / Gere: delta_max = P L^3 / (48 E I). IPE 160: I = 8.69e-6 m^4, E = 210 GPa, L = 2 m.
+  var E = 210e9, I = 8.69e-6, L = 2, EXAG = 75/7.14; // px per mm at this viewBox scale (x75 on paper scale)
+  var load = document.getElementById("load");
+  function update(){
+    var P = +load.value;
+    var d_m = (P*1e3)*Math.pow(L,3)/(48*E*I);
+    var mm = d_m*1e3;
+    var sagPx = Math.min(mm*10.5, 56); // x75 exaggeration at 7.14 mm/px sheet scale
+    var midY = 92 + sagPx*2;           // quadratic control point => apex sag = sagPx
+    document.getElementById("band").setAttribute("d", "M48 92 Q174 "+midY+" 300 92");
+    document.getElementById("curve").setAttribute("d", "M48 92 Q174 "+midY+" 300 92");
+    document.getElementById("dline").setAttribute("d", "M174 92 L174 "+(92+sagPx));
+    document.getElementById("dtext").setAttribute("y", 92+sagPx+16);
+    document.getElementById("dtext").textContent = "δ = "+mm.toFixed(2)+" mm";
+    document.getElementById("ptext").textContent = "P = "+P+" kN";
+    document.getElementById("lval").textContent = P+" kN";
+    document.getElementById("dval").textContent = mm.toFixed(2)+" mm";
+  }
+  load.addEventListener("input", update);
+  update();
+})();
+</script>
 </body>
 </html>
