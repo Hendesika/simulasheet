@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>SimulaSheet — Google Play</title>
+<style>
+  :root{
+    --bg:#F6F3EC; --surface:#FFFFFF; --grid:rgba(30,111,168,.10);
+    --line:rgba(30,111,168,.25); --ink:#16232F; --dim:#5B6B7A; --accent:#1E6FA8;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0C1420; --surface:#111D2E; --grid:rgba(79,195,247,.10);
+      --line:rgba(79,195,247,.22); --ink:#E6EFF7; --dim:#9DB2C7; --accent:#4FC3F7;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;display:grid;place-items:center;
+    padding:24px;color:var(--ink);
+    background:
+      repeating-linear-gradient(0deg,var(--grid) 0 1px,transparent 1px 24px),
+      repeating-linear-gradient(90deg,var(--grid) 0 1px,transparent 1px 24px),
+      var(--bg);
+    font:400 16px/1.6 system-ui,"Segoe UI",Roboto,sans-serif;
+  }
+  .kart{
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:30px 28px;max-width:420px;width:100%;text-align:center;
+  }
+  h1{font-size:19px;margin:0 0 6px;font-weight:600;letter-spacing:-.01em}
+  p{margin:0 0 20px;color:var(--dim);font-size:14.5px}
+  a.dugme{
+    display:inline-block;background:var(--accent);color:#fff;text-decoration:none;
+    padding:13px 22px;border-radius:10px;font-weight:600;font-size:15px;
+  }
+  a.geri{display:inline-block;margin-top:18px;color:var(--dim);font-size:13px}
+</style>
+</head>
+<body>
+<div class="kart">
+  <h1>SimulaSheet</h1>
+  <p id="durum">Opening Google Play…</p>
+  <a class="dugme" id="play"
+     href="https://play.google.com/store/apps/details?id=com.hendesika.simulasheet">Open Google Play</a>
+  <br><a class="geri" href="./">About the app</a>
+</div>
+<script>
+/* Sosyal medya bio bağlantıları buraya `?from=<platform>` ile geliyor.
+   Tek sıçrama: bu sayfa → Play. Kısaltıcı ya da üçüncü taraf yönlendirici
+   YOK — Instagram yönlendirme zincirlerini oltalama sayıp engelliyor.
+
+   Neden doğrudan Play bağlantısı değil: Instagram'ın uygulama içi tarayıcısı
+   play.google.com derin bağlantısını bio'dan açmıyor, tıklama hiçbir şey
+   yapmıyor. (2026-11-02'de telefonda ölçüldü.)
+
+   Otomatik yönlendirme çalışmazsa düğme görünür kalıyor — JavaScript kapalı
+   olabilir, gezinme engellenebilir. Sessiz bir çıkmaz bırakmıyoruz. */
+(function () {
+  var q = new URLSearchParams(location.search);
+  var p = q.get("from"), c = q.get("c") || "bio";
+  var url = "https://play.google.com/store/apps/details?id=com.hendesika.simulasheet";
+  if (p && /^[a-z]{2,20}$/.test(p)) {
+    if (!/^[a-z0-9-]{1,40}$/.test(c)) c = "bio";
+    url += "&referrer=" + encodeURIComponent("utm_source=" + p + "&utm_campaign=" + c);
+  }
+  document.getElementById("play").href = url;
+  setTimeout(function () {
+    try { location.replace(url); }
+    catch (e) { document.getElementById("durum").textContent =
+      "Tap the button below to open Google Play."; }
+  }, 350);
+})();
+</script>
+</body>
+</html>
