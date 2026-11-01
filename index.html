@@ -139,6 +139,7 @@
       <a href="#gallery" data-i18n="nav.gallery">Screens</a>
       <a href="#pro" data-i18n="nav.pro">Pro</a>
       <a href="privacy.html" data-i18n="nav.privacy">Privacy</a>
+      <a href="terms.html">Terms</a>
       <select id="lang" aria-label="Language"></select>
     </nav>
   </div>
@@ -269,7 +270,8 @@
   <div class="wrap" style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap">
     <span>© 2026 Hendesika. <span data-i18n="footer.rights">All rights reserved.</span></span>
     <span><a href="mailto:hendesika@gmail.com">hendesika@gmail.com</a> ·
-    <a href="privacy.html" data-i18n="footer.privacy">Privacy Policy</a></span>
+    <a href="privacy.html" data-i18n="footer.privacy">Privacy Policy</a> ·
+    <a href="terms.html">Terms of Service</a></span>
   </div>
 </footer>
 
@@ -335,6 +337,27 @@
   }
   load.addEventListener("input", update);
   update();
+})();
+</script>
+
+<script id="simulasheet-kaynak">
+/* Sosyal medya bio bağlantıları buraya `?from=<platform>` ile geliyor.
+   Play düğmesinin adresine kaynak etiketi eklenir, böylece Play Console
+   hangi platformdan gelindiğini gösterir.
+
+   Neden doğrudan Play bağlantısı değil: Instagram'ın uygulama içi tarayıcısı
+   play.google.com derin bağlantısını açmıyor — tıklama hiçbir şey yapmıyor.
+   Normal bir web sayfası açılıyor. (2026-11-02'de telefonda ölçüldü.) */
+(function () {
+  var q = new URLSearchParams(location.search);
+  var p = q.get("from"), c = q.get("c") || "bio";
+  if (!p || !/^[a-z]{2,20}$/.test(p)) return;
+  if (!/^[a-z0-9-]{1,40}$/.test(c)) c = "bio";
+  var ref = encodeURIComponent("utm_source=" + p + "&utm_campaign=" + c);
+  var a = document.querySelectorAll('a[href*="play.google.com"]');
+  for (var i = 0; i < a.length; i++) {
+    if (a[i].href.indexOf("referrer=") === -1) a[i].href += "&referrer=" + ref;
+  }
 })();
 </script>
 </body>
